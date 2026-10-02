@@ -20,15 +20,18 @@
 <body>
     <header class="site-header">
         <div class="container nav-wrap"><a class="brand" href="index.html"><img src="assets/noble-hart-logo.webp"
-                    alt="Noble Hart logo"><span class="brand-text"><strong>Noble Hart</strong><small>Creative Adventures
+                    alt="Noble Hart logo"><span class="brand-text"><strong data-setting="site_name">Noble Hart</strong><small data-setting="site_tagline">Creative Adventures
                         for Young Minds</small></span></a><button class="menu-toggle" aria-label="Open menu"
                 aria-expanded="false"><span></span><span></span><span></span></button>
             <nav class="nav-links" aria-label="Primary navigation"><a href="index.html#home">Home</a><a
-                    href="index.html#what-we-do">What We Do</a><a class="active" href="index.html#book">My Book</a><a
-                    href="freebies.html">Free Resources</a><a href="about.html">About</a></nav>
+                    href="index.html#what-we-do">What We Do</a><a class="active" href="books.html">Books</a><a
+                    href="freebies.html">Free Resources</a><a href="blog.html">Blog</a><a href="about.html">About</a></nav>
         </div>
     </header>
-    <main>
+    <main id="bookPage">
+        <section class="section"><div class="container center"><p class="comment-empty" style="padding:5rem 0">Loading book...</p></div></section>
+        <!-- Shown only if the CMS can't be reached, so Book 1's page never goes blank. -->
+        <template id="bookFallback">
         <section class="book-page-hero">
             <div class="container book-page-grid">
                 <div class="book-page-image reveal"><img src="assets/My Story Writing Adventure Book Mockup.png"
@@ -101,18 +104,19 @@
                 <p>Your story starts with an idea.</p>
             </div>
         </section>
+    </template>
     </main>
     <footer class="site-footer">
         <div class="container footer-grid">
             <div><a class="brand footer-brand" href="index.html"><img src="assets/noble-hart-logo.webp"
-                        alt="Noble Hart logo"><span class="brand-text"><strong>Noble Hart</strong><small>Creative
+                        alt="Noble Hart logo"><span class="brand-text"><strong data-setting="site_name">Noble Hart</strong><small data-setting="site_tagline">Creative
                             Adventures for Young Minds</small></span></a>
                 <p>NobleSPark Publishing.</p>
             </div>
             <div class="footer-links"><strong>Explore</strong><a href="index.html#what-we-do">What We Do</a><a
-                    href="index.html#book">My Book</a><a href="freebies.html">Free Resources</a><a
+                    href="books.html">Books</a><a href="freebies.html">Free Resources</a><a href="blog.html">Blog</a><a
                     href="about.html">About</a></div>
-            <div class="footer-links"><strong>Copyright</strong><span>© <span id="year"></span> Noble Hart</span></div>
+            <div class="footer-links"><strong>Copyright</strong><span>© <span id="year"></span> <span data-setting="site_name">Noble Hart</span></span></div>
         </div>
     </footer><button id="backToTop" class="back-to-top" type="button" aria-label="Back to top"><svg width="20"
             height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -121,6 +125,126 @@
             <polyline points="5 12 12 5 19 12"></polyline>
         </svg></button>
     <script src="script.js"></script>
+  <script src="cms-config.js"></script>
+  <script src="cms-site.js"></script>
+
+  <script>
+    (function () {
+      const page = document.getElementById("bookPage");
+      const FALLBACK_SLUG = "my-story-writing-adventure";
+
+      function esc(str) {
+        const d = document.createElement("div");
+        d.textContent = str == null ? "" : String(str);
+        return d.innerHTML;
+      }
+      const isReal = (u) => !!u && !/example\.com/i.test(u);
+
+      // Plain text (blank lines = new paragraph) or HTML — both accepted.
+      function richText(text) {
+        const t = String(text || "").trim();
+        if (!t) return "";
+        if (/<[a-z][\s\S]*>/i.test(t)) return t;
+        return t.split(/\n\s*\n|\n/).map((p) => "<p>" + esc(p.trim()) + "</p>").filter((p) => p !== "<p></p>").join("");
+      }
+
+      function twoTone(title) {
+        const words = String(title).trim().split(/\s+/);
+        if (words.length < 2) return esc(title);
+        return esc(words.slice(0, -1).join(" ")) + " <span>" + esc(words[words.length - 1]) + "</span>";
+      }
+
+      function showFallback(slug) {
+        const tpl = document.getElementById("bookFallback");
+        if (tpl && (!slug || slug === FALLBACK_SLUG)) {
+          page.innerHTML = tpl.innerHTML;
+        } else {
+          page.innerHTML = '<section class="section"><div class="container center" style="padding:4rem 0"><h1>Book not found</h1><p>We couldn\'t find that book.</p><a class="btn btn-primary" href="books.html">See all books <span>→</span></a></div></section>';
+        }
+      }
+
+      function render(b, freebies) {
+        const published = String(b.Status).toLowerCase() === "published";
+        const cover = isReal(b.Cover_Image_URL) ? b.Cover_Image_URL : "assets/noble-hart-logo.webp";
+        const eyebrow = [b.Series_Name, b.Series_Number ? "Book " + b.Series_Number : ""].filter(Boolean).join(" • ");
+        const intro = richText(b.Long_Description) || richText(b.Description);
+        const highlights = String(b.Highlights || "").split(/\n/).map((s) => s.trim()).filter(Boolean);
+
+        let action = "";
+        if (published && isReal(b.Amazon_URL)) {
+          action = '<a class="btn btn-primary" href="' + esc(b.Amazon_URL) + '" target="_blank" rel="noopener">Get the Book on Amazon <span>→</span></a>';
+        } else if (!published) {
+          action = '<span class="eyebrow"><span class="eyebrow-dot"></span> Coming soon</span>';
+        }
+
+        let html = '<section class="book-page-hero"><div class="container book-page-grid">' +
+          '<div class="book-page-image reveal"><img src="' + esc(cover) + '" alt="' + esc(b.Title) + '"></div>' +
+          '<div class="book-page-copy reveal delay-1">' +
+          (eyebrow ? '<span class="eyebrow"><span class="eyebrow-dot"></span> ' + esc(eyebrow) + '</span>' : "") +
+          "<h1>" + twoTone(b.Title) + "</h1>" +
+          (b.Subtitle ? '<p class="hero-lead">' + esc(b.Subtitle) + "</p>" : "") +
+          intro +
+          (action ? '<div class="hero-actions">' + action + "</div>" : "") +
+          "</div></div></section>";
+
+        const detail = richText(b.Detail_Content);
+        if (detail || highlights.length) {
+          html += '<section class="section"><div class="container book-detail-grid">' +
+            '<div class="detail-main reveal">' + detail + "</div>" +
+            (highlights.length
+              ? '<aside class="book-facts reveal delay-1">' +
+                (b.Series_Number ? '<span class="fact-label">Book ' + esc(b.Series_Number) + "</span>" : "") +
+                "<h3>" + esc(b.Title) + "</h3>" +
+                (b.Subtitle ? "<p>" + esc(b.Subtitle) + "</p>" : "") +
+                "<ul>" + highlights.map((h) => "<li>" + esc(h) + "</li>").join("") + "</ul></aside>"
+              : "") +
+            "</div></section>";
+        }
+
+        const fb = b.Related_Freebie_ID ? (freebies || []).find((f) => f.Freebie_ID === b.Related_Freebie_ID) : null;
+        if (fb) {
+          html += '<section class="section book-freebie-bridge"><div class="container bridge-grid">' +
+            '<div class="reveal"><span class="section-kicker">Free support for this book</span>' +
+            "<h2>" + esc(fb.Title) + "</h2></div>" +
+            '<div class="reveal delay-1"><p>' + esc(fb.Description || "") + '</p>' +
+            '<a class="btn btn-primary" href="freebies.html">See the Free Resources <span>→</span></a></div>' +
+            "</div></section>";
+        }
+
+        if (published && isReal(b.Amazon_URL)) {
+          html += '<section class="cta-strip"><div class="container cta-inner">' +
+            '<div><span class="section-kicker light">' + esc(b.Title) + "</span><h2>Ready to begin?</h2></div>" +
+            '<a class="btn btn-gold" href="' + esc(b.Amazon_URL) + '" target="_blank" rel="noopener">Get it on Amazon <span>→</span></a>' +
+            "</div></section>";
+        }
+
+        page.innerHTML = html;
+        document.title = b.Title + " — Noble Hart";
+        const meta = document.querySelector('meta[name="description"]');
+        if (meta && b.Description) meta.setAttribute("content", b.Description);
+      }
+
+      const slug = new URLSearchParams(location.search).get("slug");
+      if (typeof CMS_API_URL === "undefined" || /PASTE_YOUR/.test(CMS_API_URL)) return showFallback(slug);
+
+      Promise.all([
+        fetch(CMS_API_URL + "?action=books").then((r) => r.json()),
+        fetch(CMS_API_URL + "?action=freebies").then((r) => r.json()).catch(() => []),
+      ])
+        .then(function (res) {
+          const books = res[0] || [];
+          // No ?slug= in the link → show the first published book.
+          const book = slug
+            ? books.find((b) => b.Slug === slug)
+            : books.find((b) => String(b.Status).toLowerCase() === "published") || books[0];
+          if (!book) return showFallback(slug);
+          render(book, res[1]);
+        })
+        .catch(function () {
+          showFallback(slug);
+        });
+    })();
+  </script>
 </body>
 
 </html>

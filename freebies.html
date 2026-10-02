@@ -20,14 +20,15 @@
 <body>
     <header class="site-header">
         <div class="container nav-wrap"><a class="brand" href="index.html"><img src="assets/noble-hart-logo.webp"
-                    alt="Noble Hart logo"><span class="brand-text"><strong>Noble Hart</strong><small>Creative Adventures
+                    alt="Noble Hart logo"><span class="brand-text"><strong data-setting="site_name">Noble Hart</strong><small data-setting="site_tagline">Creative Adventures
                         for Young Minds</small></span></a><button class="menu-toggle" aria-label="Open menu"
                 aria-expanded="false"><span></span><span></span><span></span></button>
             <nav class="nav-links" aria-label="Primary navigation">
                 <a href="index.html#home">Home</a>
                 <a href="index.html#what-we-do">What We Do</a>
-                <a href="book.html">Books</a>
+                <a href="books.html">Books</a>
                 <a class="active" href="freebies.html">Free Resources</a>
+                <a href="blog.html">Blog</a>
                 <a href="about.html">About</a></nav>
         </div>
     </header>
@@ -121,6 +122,19 @@
                         alt="Printable Reward Pack and Parent's Guide cover mockups"></div>
             </div>
         </section>
+        <section class="section resource-details">
+            <div class="container">
+                <div class="section-heading reveal">
+                    <div><span class="section-kicker">All free resources</span>
+                        <h2>Everything available right now.</h2>
+                    </div>
+                    <p>New free resources appear here automatically as they're added.</p>
+                </div>
+                <div id="freebiesGrid" class="blog-grid">
+                    <p class="comment-empty">Loading resources...</p>
+                </div>
+            </div>
+        </section>
         <section class="cta-strip">
             <div class="container cta-inner">
                 <div><span class="section-kicker light">Supporting the journey</span>
@@ -133,15 +147,15 @@
     <footer class="site-footer">
         <div class="container footer-grid">
             <div><a class="brand footer-brand" href="index.html"><img src="assets/noble-hart-logo.webp"
-                        alt="Noble Hart logo"><span class="brand-text"><strong>Noble Hart</strong><small>Creative
+                        alt="Noble Hart logo"><span class="brand-text"><strong data-setting="site_name">Noble Hart</strong><small data-setting="site_tagline">Creative
                             Adventures for Young Minds</small></span></a>
                 <p>Free resources for young writers and the adults who support them.</p>
             </div>
             <div class="footer-links"><strong>Explore</strong><a href="index.html#what-we-do">What We Do</a><a
-                    href="index.html#book">My Book</a><a href="freebies.html">Free Resources</a><a
+                    href="books.html">Books</a><a href="freebies.html">Free Resources</a><a href="blog.html">Blog</a><a
                     href="about.html">About</a></div>
-            <div class="footer-links"><strong>Publisher</strong><span>NobleSPark Publishing</span><span>© <span
-                        id="year"></span> Noble Hart</span></div>
+            <div class="footer-links"><strong>Publisher</strong><span data-setting="publisher_name">NobleSPark Publishing</span><span>© <span
+                        id="year"></span> <span data-setting="site_name">Noble Hart</span></span></div>
         </div>
     </footer><button id="backToTop" class="back-to-top" type="button" aria-label="Back to top"><svg width="20"
             height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -150,6 +164,210 @@
             <polyline points="5 12 12 5 19 12"></polyline>
         </svg></button>
     <script src="script.js"></script>
+    <script src="cms-config.js"></script>
+    <script src="cms-site.js"></script>
+    <script>
+        (function () {
+            const grid = document.getElementById("freebiesGrid");
+            if (typeof CMS_API_URL === "undefined") return;
+
+            function escapeHtml(str) {
+                const div = document.createElement("div");
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            // cms-site.js (loaded earlier on this page) owns the actual
+            // token; fall back to an empty string if it's unavailable for
+            // any reason — the server just treats that as one shared
+            // "anonymous" bucket for rate limiting.
+            function visitorToken() {
+                return (typeof NobleHartCMS !== "undefined" && NobleHartCMS.getVisitorToken) ? NobleHartCMS.getVisitorToken() : "";
+            }
+
+            // Resolves to an empty string if reCAPTCHA isn't configured —
+            // the server-side check degrades the same way, so this never
+            // blocks a download just because the site owner hasn't set it up.
+            function recaptchaToken(action) {
+                return (typeof NobleHartCMS !== "undefined" && NobleHartCMS.getRecaptchaToken)
+                    ? NobleHartCMS.getRecaptchaToken(action)
+                    : Promise.resolve("");
+            }
+
+            // ---- Download tracking (fire-and-forget, never blocks the download) ----
+            function trackDownload(freebieId) {
+                try {
+                    recaptchaToken("trackDownload")
+                        .then(function (token) {
+                            return fetch(CMS_API_URL, {
+                                method: "POST",
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify({ action: "trackDownload", freebieId: freebieId, visitorToken: visitorToken(), recaptchaToken: token }),
+                            });
+                        })
+                        .catch(function () {});
+                } catch (e) {}
+            }
+
+            function openLink(url) {
+                window.open(url, "_blank", "noopener");
+            }
+
+            // ---- Email gate modal (built once, reused for every gated freebie) ----
+            let gateEl = null;
+            function buildGate() {
+                if (gateEl) return gateEl;
+                gateEl = document.createElement("div");
+                gateEl.className = "freebie-gate-overlay";
+                gateEl.innerHTML = `
+                  <div class="freebie-gate-box" role="dialog" aria-modal="true" aria-label="Get this free resource">
+                    <button type="button" class="freebie-gate-close" aria-label="Close">×</button>
+                    <h3 id="freebieGateTitle">Get this free resource</h3>
+                    <p id="freebieGateSub" class="muted">Enter your email and it's yours.</p>
+                    <form id="freebieGateForm" class="comment-form">
+                      <label class="sr-only" for="freebieGateName">Your name</label>
+                      <input id="freebieGateName" name="name" type="text" placeholder="First name (optional)">
+                      <label class="sr-only" for="freebieGateEmail">Your email</label>
+                      <input id="freebieGateEmail" name="email" type="email" placeholder="Email address" required>
+                      <label class="comment-honeypot" for="freebieGateWebsite">Website</label>
+                      <input class="comment-honeypot" id="freebieGateWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+                      <button class="btn btn-primary" type="submit">Send Me the Resource</button>
+                      <p class="comment-status" id="freebieGateStatus"></p>
+                    </form>
+                  </div>`;
+                document.body.appendChild(gateEl);
+                gateEl.querySelector(".freebie-gate-close").addEventListener("click", closeGate);
+                gateEl.addEventListener("click", function (e) {
+                    if (e.target === gateEl) closeGate();
+                });
+                return gateEl;
+            }
+            function closeGate() {
+                if (gateEl) gateEl.classList.remove("is-open");
+            }
+
+            function openFreebieGate(freebieId, url, title) {
+                const el = buildGate();
+                el.querySelector("#freebieGateTitle").textContent = title || "Get this free resource";
+                const status = el.querySelector("#freebieGateStatus");
+                status.textContent = "";
+                status.className = "comment-status";
+                const form = el.querySelector("#freebieGateForm");
+                form.reset();
+                el.classList.add("is-open");
+
+                form.onsubmit = function (e) {
+                    e.preventDefault();
+                    const email = form.elements["email"].value.trim();
+                    const name = form.elements["name"].value.trim();
+                    const honeypot = form.elements["website"].value;
+                    if (!email) return;
+
+                    const btn = form.querySelector("button[type=submit]");
+                    btn.disabled = true;
+                    status.textContent = "One moment...";
+
+                    recaptchaToken("captureEmail")
+                        .then(function (token) {
+                            return fetch(CMS_API_URL, {
+                                method: "POST",
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify({ action: "captureEmail", email: email, name: name, freebieId: freebieId, website: honeypot, visitorToken: visitorToken(), recaptchaToken: token }),
+                            });
+                        })
+                        .then((res) => res.json())
+                        .then((result) => {
+                            if (result && result.error) throw new Error(result.error);
+                            try {
+                                localStorage.setItem("nh_freebie_emailed_" + freebieId, "1");
+                            } catch (err) {}
+                            trackDownload(freebieId);
+                            closeGate();
+                            openLink(url);
+                        })
+                        .catch(function (err) {
+                            status.textContent = (err && err.message) || "Something went wrong. Please try again.";
+                            status.className = "comment-status error";
+                        })
+                        .finally(function () {
+                            btn.disabled = false;
+                        });
+                };
+            }
+
+            function handleFreebieClick(freebieId, url, title, gated) {
+                if (!gated) {
+                    trackDownload(freebieId);
+                    openLink(url);
+                    return;
+                }
+                let alreadyGiven = false;
+                try {
+                    alreadyGiven = !!localStorage.getItem("nh_freebie_emailed_" + freebieId);
+                } catch (e) {}
+                if (alreadyGiven) {
+                    trackDownload(freebieId);
+                    openLink(url);
+                } else {
+                    openFreebieGate(freebieId, url, title);
+                }
+            }
+
+            grid.addEventListener("click", function (e) {
+                const btn = e.target.closest(".freebie-cta");
+                if (!btn) return;
+                e.preventDefault();
+                handleFreebieClick(
+                    btn.dataset.freebieId,
+                    decodeURIComponent(btn.dataset.url),
+                    decodeURIComponent(btn.dataset.title || ""),
+                    btn.dataset.gated === "1"
+                );
+            });
+
+            const dataPromise = typeof NobleHartCMS !== "undefined"
+                ? NobleHartCMS.loadSiteData().then((data) => data.freebies || [])
+                : fetch(`${CMS_API_URL}?action=freebies`).then((r) => r.json());
+
+            dataPromise
+                .then((freebies) => {
+                    if (!freebies || !freebies.length) {
+                        grid.innerHTML = '<p class="comment-empty">New resources are on the way — check back soon.</p>';
+                        return;
+                    }
+                    grid.innerHTML = freebies
+                        .map((f) => {
+                            const img = f.Cover_Image_URL && !/example\.com/i.test(f.Cover_Image_URL) ? f.Cover_Image_URL : "assets/freebie-mockup.webp";
+                            const isReal = (u) => u && !/example\.com/i.test(u);
+                            const downloadUrl = isReal(f.Download_URL) ? f.Download_URL : "";
+                            const previewUrl = isReal(f.Preview_URL) ? f.Preview_URL : "";
+                            const primaryUrl = downloadUrl || previewUrl || "#";
+                            const gated = !!downloadUrl && String(f.Email_Required).toLowerCase() !== "no";
+                            const cta = f.CTA_Text || "Get This Resource";
+
+                            const primaryBtn = `<button type="button" class="blog-card-link freebie-cta" data-freebie-id="${escapeHtml(f.Freebie_ID)}" data-url="${encodeURIComponent(primaryUrl)}" data-title="${encodeURIComponent(f.Title || "")}" data-gated="${gated ? "1" : "0"}">${escapeHtml(cta)} →</button>`;
+                            const previewLink = downloadUrl && previewUrl
+                                ? `<a class="blog-card-link" href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener" style="margin-left:.75rem">Preview first</a>`
+                                : "";
+
+                            return `
+                          <article class="blog-card reveal">
+                            <div class="blog-card-image"><img src="${escapeHtml(img)}" alt="${escapeHtml(f.Title)}"></div>
+                            <div class="blog-card-body">
+                              <span class="blog-card-meta">${escapeHtml(f.Format || "")}${f.Audience ? " · " + escapeHtml(f.Audience) : ""}</span>
+                              <h3>${escapeHtml(f.Title)}</h3>
+                              <p>${escapeHtml(f.Description || "")}</p>
+                              <div>${primaryBtn}${previewLink}</div>
+                            </div>
+                          </article>`;
+                        })
+                        .join("");
+                })
+                .catch(() => {
+                    grid.innerHTML = '<p class="comment-empty">Resources are unavailable right now. Please try again later.</p>';
+                });
+        })();
+    </script>
 </body>
 
 </html>

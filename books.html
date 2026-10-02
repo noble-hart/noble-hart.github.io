@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore books from Noble Hart — creative writing journals and story adventures for kids.">
+  <meta name="theme-color" content="#17365D">
+  <title>Books — Noble Hart</title>
+  <link rel="icon" type="image/png" href="assets/noble-hart-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap"><a class="brand" href="index.html"><img src="assets/noble-hart-logo.webp"
+          alt="Noble Hart logo"><span class="brand-text"><strong data-setting="site_name">Noble Hart</strong><small data-setting="site_tagline">Creative Adventures for
+            Young Minds</small></span></a><button class="menu-toggle" aria-label="Open menu"
+        aria-expanded="false"><span></span><span></span><span></span></button>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="index.html#home">Home</a>
+        <a href="index.html#what-we-do">What We Do</a>
+        <a class="active" href="books.html">Books</a>
+        <a href="freebies.html">Free Resources</a>
+        <a href="blog.html">Blog</a>
+        <a href="about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="blog-hero">
+      <div class="container narrow center reveal"><span class="eyebrow"><span class="eyebrow-dot"></span> Noble Hart
+          Books</span>
+        <h1>Stories and journals <span>for young writers.</span></h1>
+        <p class="hero-lead" style="max-width: 100%">Every book in the Noble Hart collection, in one place.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div id="booksGrid" class="blog-grid">
+          <p class="comment-empty">Loading books...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div><a class="brand footer-brand" href="index.html"><img src="assets/noble-hart-logo.webp"
+            alt="Noble Hart logo"><span class="brand-text"><strong data-setting="site_name">Noble Hart</strong><small data-setting="site_tagline">Creative Adventures for
+              Young Minds</small></span></a>
+        <p>Books, stories, activities, and creative resources for young minds.</p>
+      </div>
+      <div class="footer-links"><strong>Explore</strong><a href="index.html">Home</a><a href="blog.html">Blog</a><a
+          href="about.html">About</a></div>
+      <div class="footer-links"><strong>Publisher</strong><span data-setting="publisher_name">NobleSPark Publishing</span><span>© <span
+            id="year"></span> <span data-setting="site_name">Noble Hart</span></span></div>
+    </div>
+  </footer>
+  <button id="backToTop" class="back-to-top" type="button" aria-label="Back to top"><svg width="20" height="20"
+      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+      stroke-linejoin="round">
+      <line x1="12" y1="19" x2="12" y2="5"></line>
+      <polyline points="5 12 12 5 19 12"></polyline>
+    </svg></button>
+  <script src="script.js"></script>
+  <script src="cms-config.js"></script>
+  <script src="cms-site.js"></script>
+  <script>
+    (function () {
+      const grid = document.getElementById("booksGrid");
+      if (typeof CMS_API_URL === "undefined") return;
+
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      const dataPromise = typeof NobleHartCMS !== "undefined"
+        ? NobleHartCMS.loadSiteData().then((data) => data.books || [])
+        : fetch(`${CMS_API_URL}?action=books`).then((r) => r.json());
+
+      dataPromise
+        .then((books) => {
+          if (!books || !books.length) {
+            grid.innerHTML = '<p class="comment-empty">New books are on the way — check back soon.</p>';
+            return;
+          }
+          grid.innerHTML = books
+            .map((b) => {
+              const img = b.Cover_Image_URL && !/example\.com/i.test(b.Cover_Image_URL) ? b.Cover_Image_URL : "assets/noble-hart-logo.webp";
+              const isPublished = String(b.Status).toLowerCase() === "published";
+              const href = "book.html?slug=" + encodeURIComponent(b.Slug || "");
+              const meta = [b.Series_Name, b.Age_Range ? `Ages ${b.Age_Range}` : ""].filter(Boolean).join(" · ");
+              const action = `<a class="blog-card-link" href="${escapeHtml(href)}">${isPublished ? "View details" : "Coming soon — view details"} →</a>`;
+
+              return `
+              <article class="blog-card reveal">
+                <a class="blog-card-image" href="${escapeHtml(href)}"><img src="${escapeHtml(img)}" alt="${escapeHtml(b.Title)}"></a>
+                <div class="blog-card-body">
+                  <span class="blog-card-meta">${escapeHtml(meta)}</span>
+                  <h3><a href="${escapeHtml(href)}">${escapeHtml(b.Title)}</a></h3>
+                  <p>${escapeHtml(b.Description || b.Subtitle || "")}</p>
+                  ${action}
+                </div>
+              </article>`;
+            })
+            .join("");
+        })
+        .catch(() => {
+          grid.innerHTML = '<p class="comment-empty">Books are unavailable right now. Please try again later.</p>';
+        });
+    })();
+  </script>
+</body>
+
+</html>

@@ -21,15 +21,16 @@
   <header class="site-header" id="top">
     <div class="container nav-wrap">
       <a class="brand" href="index.html" aria-label="Noble Hart home"><img src="assets/noble-hart-logo.webp"
-          alt="Noble Hart logo"><span class="brand-text"><strong>Noble Hart</strong><small>Creative Adventures for Young
+          alt="Noble Hart logo"><span class="brand-text"><strong data-setting="site_name">Noble Hart</strong><small data-setting="site_tagline">Creative Adventures for Young
             Minds</small></span></a>
       <button class="menu-toggle" aria-label="Open menu"
         aria-expanded="false"><span></span><span></span><span></span></button>
       <nav class="nav-links" aria-label="Primary navigation">
         <a class="active" href="#home">Home</a>
         <a href="#what-we-do">Explore</a>
-        <a href="#book">Books</a>
+        <a href="books.html">Books</a>
         <a href="freebies.html">Free Resources</a>
+        <a href="blog.html">Blog</a>
         <a href="#contact">Contact</a>
         <a href="#founder">About</a>
       </nav>
@@ -42,10 +43,10 @@
       <div class="container hero-grid">
         <div class="hero-copy reveal"><span class="eyebrow"><span class="eyebrow-dot"></span> Books • Stories •
             Creativity • Discovery</span>
-          <h1>Where young ideas <span>come to life.</span></h1>
-          <p class="hero-lead">Noble Hart creates thoughtful books and creative experiences that help children imagine
+          <h1 id="heroTitle">Where young ideas <span>come to life.</span></h1>
+          <p class="hero-lead" id="heroLead">Noble Hart creates thoughtful books and creative experiences that help children imagine
             boldly, express their ideas, build skills, and discover the joy of creating something of their own.</p>
-          <div class="hero-actions"><a class="btn btn-primary" href="#what-we-do">Explore Noble Hart <span>↓</span></a>
+          <div class="hero-actions"><a class="btn btn-primary" id="heroCta" href="#what-we-do">Explore Noble Hart <span>↓</span></a>
           </div>
           <div class="hero-note"><span>✦</span> Made for curious children. Designed with parents and growing minds in
             mind.</div>
@@ -144,8 +145,18 @@
               reflection</span><span>Encouragement and achievement rewards</span><span>Created for young writers ages
               7–12</span></div>
           <p class="book-note">The book is part of the growing Young Author Adventure world from Noble Hart.</p><a
-            class="btn btn-primary" href="book.html">Learn More About the Book <span>→</span></a>
+            class="btn btn-primary" href="book.html?slug=my-story-writing-adventure">Learn More About the Book <span>→</span></a>
         </div>
+      </div>
+    </section>
+
+    <section class="featured-freebie" id="featuredFreebie" hidden>
+      <div class="container cta-inner">
+        <div><span class="section-kicker">Free for you</span>
+          <h2 id="featuredFreebieTitle">Free resource</h2>
+          <p id="featuredFreebieText"></p>
+        </div>
+        <a class="btn btn-primary" id="featuredFreebieBtn" href="#" target="_blank" rel="noopener">Get the Free Resource <span>→</span></a>
       </div>
     </section>
 
@@ -197,7 +208,7 @@
         <div class="newsletter-copy">
           <span class="section-kicker light">Stay in the loop</span>
           <h2>Join the Noble Hart newsletter.</h2>
-          <p>Get occasional updates about new books, free resources, creative activities, and helpful ideas for
+          <p data-setting="newsletter_cta">Get occasional updates about new books, free resources, creative activities, and helpful ideas for
             supporting young writers.</p>
         </div>
         <form class="newsletter-form" id="newsletterForm">
@@ -215,15 +226,15 @@
 
     <section class="founder-preview" id="founder">
       <div class="container founder-card reveal">
-        <div class="founder-image-wrap"><img src="assets/abdulmajeed-abdussalam.webp"
-            alt="Abdulmajeed Abdussalam, founder of Noble Hart"></div>
+        <div class="founder-image-wrap"><img src="assets/noble-hart-author-illustration.jpg"
+            alt="Noble Hart, founder of Noble Hart"></div>
         <div class="founder-copy"><span class="section-kicker">Behind Noble Hart</span>
           <h2>There's a person behind every idea.</h2>
-          <p>Noble Hart was created by <strong>Abdulmajeed Abdussalam</strong>, Founder & Publisher, with a vision of
+          <p>Noble Hart was created by <strong>Noble Hart</strong>, Founder & Publisher, with a vision of
             building thoughtful children's books and creative resources that help young minds imagine, express, and
             grow.</p>
           <p>Noble Hart is published under <strong>NobleSPark Publishing</strong>.</p><a class="btn btn-primary"
-            href="about.html">Meet Abdulmajeed <span>→</span></a>
+            href="about.html">Meet Noble Hart <span>→</span></a>
         </div>
       </div>
     </section>
@@ -240,14 +251,14 @@
   <footer class="site-footer">
     <div class="container footer-grid">
       <div><a class="brand footer-brand" href="#home"><img src="assets/noble-hart-logo.webp" alt="Noble Hart logo"><span
-            class="brand-text"><strong>Noble Hart</strong><small>Creative Adventures for Young Minds</small></span></a>
+            class="brand-text"><strong data-setting="site_name">Noble Hart</strong><small data-setting="site_tagline">Creative Adventures for Young Minds</small></span></a>
         <p>Books, stories, activities, and creative resources for young minds.</p>
       </div>
-      <div class="footer-links"><strong>Explore</strong><a href="#what-we-do">Explore</a><a href="#book">My Book</a><a
-          href="freebies.html">Free Resources</a><a href="#contact">Contact Me</a><a href="#newsletter">Newsletter</a><a
+      <div class="footer-links"><strong>Explore</strong><a href="#what-we-do">Explore</a><a href="books.html">Books</a><a
+          href="freebies.html">Free Resources</a><a href="blog.html">Blog</a><a href="#contact">Contact Me</a><a href="#newsletter">Newsletter</a><a
           href="about.html">About</a></div>
-      <div class="footer-links"><strong>Publisher</strong><span>NobleSPark Publishing</span><span>© <span
-            id="year"></span> Noble Hart</span></div>
+      <div class="footer-links"><strong>Publisher</strong><span data-setting="publisher_name">NobleSPark Publishing</span><span>© <span
+            id="year"></span> <span data-setting="site_name">Noble Hart</span></span></div>
     </div>
   </footer>
   <button id="backToTop" class="back-to-top" type="button" aria-label="Back to top"><svg width="20" height="20"
@@ -259,6 +270,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="emailjs-config.js"></script>
   <script src="script.js"></script>
+  <script src="cms-config.js"></script>
+  <script src="cms-site.js"></script>
 </body>
 
 </html>

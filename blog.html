@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+    content="Insightful tips on storytelling, creative writing, and raising confident young readers — from Noble Hart.">
+  <meta name="theme-color" content="#17365D">
+  <title>Blog — Noble Hart</title>
+  <link rel="icon" type="image/png" href="assets/noble-hart-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap"><a class="brand" href="index.html"><img src="assets/noble-hart-logo.webp"
+          alt="Noble Hart logo"><span class="brand-text"><strong data-setting="site_name">Noble Hart</strong><small data-setting="site_tagline">Creative Adventures for
+            Young Minds</small></span></a><button class="menu-toggle" aria-label="Open menu"
+        aria-expanded="false"><span></span><span></span><span></span></button>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="index.html#home">Home</a>
+        <a href="index.html#what-we-do">What We Do</a>
+        <a href="books.html">Books</a>
+        <a href="freebies.html">Free Resources</a>
+        <a class="active" href="blog.html">Blog</a>
+        <a href="about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="blog-hero">
+      <div class="container narrow center reveal"><span class="eyebrow"><span class="eyebrow-dot"></span> The Noble
+          Hart Blog</span>
+        <h1>Tips, stories, and ideas <span>for young writers.</span></h1>
+        <p class="hero-lead" style="max-width: 100%">Helpful reads for parents, teachers, and curious kids —
+          on storytelling, creativity, and raising confident young readers.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="blog-search-row">
+          <input type="search" id="blogSearch" class="blog-search-input" placeholder="Search posts..." aria-label="Search blog posts">
+        </div>
+        <div id="blogGrid" class="blog-grid">
+          <p class="comment-empty">Loading posts...</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-strip">
+      <div class="container cta-inner">
+        <div><span class="section-kicker light">More on the way</span>
+          <h2>New posts are added regularly.</h2>
+        </div>
+        <p>Check back soon, or follow Noble Hart on Pinterest for new tips as they're published.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div><a class="brand footer-brand" href="index.html"><img src="assets/noble-hart-logo.webp"
+            alt="Noble Hart logo"><span class="brand-text"><strong data-setting="site_name">Noble Hart</strong><small data-setting="site_tagline">Creative Adventures for
+              Young Minds</small></span></a>
+        <p>Books, stories, activities, and creative resources for young minds.</p>
+      </div>
+      <div class="footer-links"><strong>Explore</strong><a href="index.html">Home</a><a href="blog.html">Blog</a><a
+          href="about.html">About</a></div>
+      <div class="footer-links"><strong>Publisher</strong><span data-setting="publisher_name">NobleSPark Publishing</span><span>© <span
+            id="year"></span> <span data-setting="site_name">Noble Hart</span></span></div>
+    </div>
+  </footer>
+  <button id="backToTop" class="back-to-top" type="button" aria-label="Back to top"><svg width="20" height="20"
+      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+      stroke-linejoin="round">
+      <line x1="12" y1="19" x2="12" y2="5"></line>
+      <polyline points="5 12 12 5 19 12"></polyline>
+    </svg></button>
+  <script src="script.js"></script>
+  <script src="cms-config.js"></script>
+  <script src="cms-site.js"></script>
+  <script>
+    (function () {
+      const grid = document.getElementById("blogGrid");
+      const searchInput = document.getElementById("blogSearch");
+      if (typeof CMS_API_URL === "undefined") return;
+
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      let allArticles = [];
+      let categories = [];
+
+      function renderCards(articles) {
+        if (!articles.length) {
+          grid.innerHTML = '<p class="comment-empty">No posts match your search.</p>';
+          return;
+        }
+        grid.innerHTML = articles
+          .map((a) => {
+            const cat = categories.find((c) => c.Category_ID === a.Category_ID);
+            const catName = cat ? cat.Category_Name : "";
+            const href = `blog/${a.Slug}.html`;
+            const img = a.Featured_Image_URL && !/example\.com/i.test(a.Featured_Image_URL) ? a.Featured_Image_URL : "assets/noble-hart-logo.webp";
+            return `
+            <article class="blog-card reveal">
+              <a href="${href}" class="blog-card-image"><img src="${escapeHtml(img)}" alt="${escapeHtml(a.Title)}"></a>
+              <div class="blog-card-body">
+                <span class="blog-card-meta">${escapeHtml(catName)}${catName ? " · " : ""}${escapeHtml(a.Publish_Date || "")}</span>
+                <h3><a href="${href}">${escapeHtml(a.Title)}</a></h3>
+                <p>${escapeHtml(a.Excerpt || "")}</p>
+                <a class="blog-card-link" href="${href}">Read more →</a>
+              </div>
+            </article>`;
+          })
+          .join("");
+      }
+
+      function applySearch() {
+        const q = (searchInput.value || "").trim().toLowerCase();
+        if (!q) return renderCards(allArticles);
+        renderCards(
+          allArticles.filter((a) => (a.Title || "").toLowerCase().includes(q) || (a.Excerpt || "").toLowerCase().includes(q))
+        );
+      }
+
+      const dataPromise = typeof NobleHartCMS !== "undefined"
+        ? NobleHartCMS.loadSiteData()
+        : fetch(`${CMS_API_URL}?action=siteData`).then((r) => r.json());
+
+      dataPromise
+        .then((data) => {
+          allArticles = data.articles || [];
+          categories = data.categories || [];
+          if (!allArticles.length) {
+            grid.innerHTML = '<p class="comment-empty">New posts are on the way — check back soon.</p>';
+            return;
+          }
+          renderCards(allArticles);
+          if (searchInput) searchInput.addEventListener("input", applySearch);
+        })
+        .catch(() => {
+          grid.innerHTML = '<p class="comment-empty">Posts are unavailable right now. Please try again later.</p>';
+        });
+    })();
+  </script>
+</body>
+
+</html>

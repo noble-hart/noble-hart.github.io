@@ -8,10 +8,20 @@
 
   document.querySelectorAll('#year').forEach(el=>el.textContent=new Date().getFullYear());
   const items=document.querySelectorAll('.reveal');
-  if('IntersectionObserver' in window){
-    const io=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('is-visible');io.unobserve(e.target)}})},{threshold:.12});
-    items.forEach(el=>io.observe(el));
-  }else{items.forEach(el=>el.classList.add('is-visible'))}
+  const io='IntersectionObserver' in window
+    ? new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('is-visible');io.unobserve(e.target)}})},{threshold:.12})
+    : null;
+  function watchReveal(el){ if(io){io.observe(el)}else{el.classList.add('is-visible')} }
+  items.forEach(watchReveal);
+  // Content inserted after page load (blog/book/freebie cards, About body, book detail pages)
+  // must be revealed too, otherwise it stays invisible.
+  new MutationObserver(muts=>{
+    muts.forEach(m=>m.addedNodes.forEach(n=>{
+      if(n.nodeType!==1)return;
+      if(n.classList&&n.classList.contains('reveal'))watchReveal(n);
+      if(n.querySelectorAll)n.querySelectorAll('.reveal').forEach(watchReveal);
+    }));
+  }).observe(document.body,{childList:true,subtree:true});
 
   const cfg=window.NOBLE_HART_EMAILJS||{};
   const configured=Boolean(cfg.publicKey&&cfg.serviceId&&cfg.publicKey!=='YOUR_PUBLIC_KEY'&&cfg.serviceId!=='YOUR_SERVICE_ID');
