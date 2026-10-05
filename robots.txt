@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://noble-hart.github.io/sitemap.xml
